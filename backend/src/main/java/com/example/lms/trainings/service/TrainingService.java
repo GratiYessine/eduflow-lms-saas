@@ -19,7 +19,6 @@ import com.example.lms.trainings.repository.TrainingRepository;
 import com.example.lms.users.entity.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -75,7 +74,6 @@ public class TrainingService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "trainings", key = "'get:' + #id")
     public TrainingResponse get(Long id) {
         Training training = trainingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Training not found"));
