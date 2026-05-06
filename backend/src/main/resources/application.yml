@@ -1,0 +1,107 @@
+spring:
+  application:
+    name: lms-saas-backend
+  profiles:
+    active: dev
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  cache:
+    type: redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:2s}
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:false}
+          starttls:
+            enable: ${SMTP_STARTTLS:false}
+
+server:
+  port: ${PORT:${SERVER_PORT:8080}}
+
+app:
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@lms.local}
+    brand:
+      name: ${MAIL_BRAND_NAME:EduFlow B2B LMS}
+      primary-color: ${MAIL_BRAND_PRIMARY_COLOR:#4f46e5}
+      logo-url: ${MAIL_BRAND_LOGO_URL:}
+  security:
+    auth-rate-limit:
+      backend: ${AUTH_RATE_LIMIT_BACKEND:redis}
+      max-requests: ${AUTH_RATE_LIMIT_MAX_REQUESTS:20}
+      window-ms: ${AUTH_RATE_LIMIT_WINDOW_MS:60000}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://127.0.0.1:4200}
+  jwt:
+    secret: ${JWT_SECRET:dev-only-change-me-jwt-secret-please-keep-32-chars-minimum}
+    access-expiration-ms: ${JWT_ACCESS_EXPIRATION:900000}
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION:604800000}
+  files:
+    provider: ${FILE_STORAGE_PROVIDER:local}
+    storage-path: ${FILE_STORAGE_PATH:./uploads}
+    max-size-bytes: ${FILE_MAX_SIZE_BYTES:10485760}
+    s3:
+      bucket: ${S3_BUCKET:}
+      region: ${S3_REGION:}
+      endpoint: ${S3_ENDPOINT:}
+      public-endpoint: ${S3_PUBLIC_ENDPOINT:${S3_ENDPOINT:}}
+    minio:
+      bucket: ${MINIO_BUCKET:}
+      endpoint: ${MINIO_ENDPOINT:}
+      public-endpoint: ${MINIO_PUBLIC_ENDPOINT:${MINIO_ENDPOINT:}}
+      region: ${MINIO_REGION:us-east-1}
+    cloudinary:
+      cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  monitoring:
+    sentry-dsn: ${SENTRY_DSN:}
+    environment: ${APP_ENVIRONMENT:local}
+    release: ${APP_RELEASE:local}
+  bootstrap:
+    super-admin:
+      email: ${APP_BOOTSTRAP_SUPER_ADMIN_EMAIL:}
+      password: ${APP_BOOTSTRAP_SUPER_ADMIN_PASSWORD:}
+      first-name: ${APP_BOOTSTRAP_SUPER_ADMIN_FIRST_NAME:Super}
+      last-name: ${APP_BOOTSTRAP_SUPER_ADMIN_LAST_NAME:Admin}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  health:
+    redis:
+      enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui/index.html
+
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${APP_ENVIRONMENT:local}
+  release: ${APP_RELEASE:local}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.0}
+  send-default-pii: false

@@ -1,0 +1,156 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lms-postgres
+    environment:
+      POSTGRES_DB: lms
+      POSTGRES_USER: lms
+      POSTGRES_PASSWORD: lms
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms -d lms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: lms-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: lms-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: lms-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-lmsminio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-lmsminio123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-setup:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    container_name: lms-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-lmsminio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-lmsminio123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-lms-files}
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD
+      && mc mb --ignore-existing local/$$MINIO_BUCKET
+      && mc anonymous set none local/$$MINIO_BUCKET"
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lms-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:postgresql://postgres:5432/lms
+      DB_USERNAME: lms
+      DB_PASSWORD: lms
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me-jwt-secret-please-keep-32-chars-minimum}
+      JWT_ACCESS_EXPIRATION: 900000
+      JWT_REFRESH_EXPIRATION: 604800000
+      FILE_STORAGE_PATH: /app/uploads
+      FILE_STORAGE_PROVIDER: minio
+      MINIO_BUCKET: ${MINIO_BUCKET:-lms-files}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_PUBLIC_ENDPOINT: http://localhost:9000
+      MINIO_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-lmsminio}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-lmsminio123}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_TYPE: simple
+      REDIS_HEALTH_ENABLED: "true"
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@eduflow.local}
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-false}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:4200}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}
+      AUTH_RATE_LIMIT_BACKEND: ${AUTH_RATE_LIMIT_BACKEND:-redis}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      APP_ENVIRONMENT: docker
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: lms-prometheus
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: lms-grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+
+volumes:
+  postgres-data:
+  uploads:
+  grafana-data:
+  minio-data:

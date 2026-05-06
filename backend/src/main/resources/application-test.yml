@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:lms;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+  cache:
+    type: simple
+
+app:
+  mail:
+    enabled: false
+  security:
+    auth-rate-limit:
+      backend: local
+  jwt:
+    secret: test-only-change-me-jwt-secret-please-keep-32-chars-minimum
+    access-expiration-ms: 900000
+    refresh-expiration-ms: 604800000
+  files:
+    storage-path: target/test-uploads
+
+management:
+  health:
+    mail:
+      enabled: false
+    redis:
+      enabled: false

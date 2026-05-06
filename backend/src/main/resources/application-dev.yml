@@ -1,0 +1,26 @@
+spring:
+  cache:
+    type: ${CACHE_TYPE:simple}
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/lms}
+    username: ${DB_USERNAME:lms}
+    password: ${DB_PASSWORD:lms}
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+logging:
+  level:
+    com.example.lms: INFO
+
+management:
+  health:
+    redis:
+      enabled: ${REDIS_HEALTH_ENABLED:false}
+
+app:
+  security:
+    auth-rate-limit:
+      backend: ${AUTH_RATE_LIMIT_BACKEND:local}

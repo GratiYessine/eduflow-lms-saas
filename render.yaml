@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: eduflow-lms-api
+    runtime: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_HOST
+        fromDatabase:
+          name: eduflow-lms-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: eduflow-lms-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: eduflow-lms-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: eduflow-lms-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: eduflow-lms-db
+          property: password
+      - key: REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: eduflow-lms-cache
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: eduflow-lms-cache
+          property: port
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_BASE_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: MAIL_ENABLED
+        value: false
+      - key: JSON_LOGS
+        value: true
+      - key: APP_ENVIRONMENT
+        value: production
+      - key: SWAGGER_ENABLED
+        value: false
+
+  - type: keyvalue
+    name: eduflow-lms-cache
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+  - name: eduflow-lms-db
+    plan: free
+    databaseName: eduflow_lms
+    user: eduflow
+    ipAllowList: []
