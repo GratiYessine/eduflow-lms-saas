@@ -31,7 +31,7 @@ server:
 app:
   frontend-base-url: ${FRONTEND_BASE_URL:https://eduflow-lms-e0f9b.web.app}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:${FRONTEND_BASE_URL:https://eduflow-lms-e0f9b.web.app}}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:},${FRONTEND_BASE_URL:https://eduflow-lms-e0f9b.web.app},https://eduflow-lms-e0f9b.web.app
   jwt:
     secret: ${JWT_SECRET}
   mail:
