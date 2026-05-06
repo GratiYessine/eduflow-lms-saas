@@ -51,7 +51,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/accept-invitation").permitAll()
                         .requestMatchers("/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/trainings/*", "/api/v1/trainings/*/lessons").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/trainings", "/api/v1/trainings/*", "/api/v1/trainings/*/lessons").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/certificates/verify/**").permitAll()
                         .anyRequest().authenticated()
                 )
