@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://YOUR_RENDER_BACKEND_URL/api/v1'
+  apiBaseUrl: 'https://eduflow-lms-api.onrender.com/api/v1'
 };
